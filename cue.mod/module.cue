@@ -1,0 +1,1 @@
+module: "bookinfo.module"

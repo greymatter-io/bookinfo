@@ -1,0 +1,447 @@
+# Copyright Istio Authors
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+##################################################################################################
+# This file defines the services, service accounts, and deployments for the Bookinfo sample.
+#
+# To apply all 4 Bookinfo services, their corresponding service accounts, and deployments:
+#
+#   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
+#
+# Alternatively, you can deploy any resource separately:
+#
+#   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml -l service=reviews # reviews Service
+#   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml -l account=reviews # reviews ServiceAccount
+#   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml -l app=reviews,version=v3 # reviews-v3 Deployment
+##################################################################################################
+
+##################################################################################################
+# Details service
+##################################################################################################
+### 1. greymatter.io does not use or need to expose services that are not related to the gm proxy sidecar
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: details
+#   labels:
+#     app: details
+#     service: details
+# spec:
+#   ports:
+#   - port: 9080
+#     name: http
+#   selector:
+#     app: details
+# ---
+# apiVersion: v1
+# kind: ServiceAccount
+# metadata:
+#   name: bookinfo-details
+#   labels:
+#     account: details
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  ### Change the name to prevent name collision in greymatter.io
+  name: bookinfo-details-v1
+  labels:
+    app: bookinfo-details
+    version: v1
+  ### 2. Annotation for greymatter.io sidecar injection
+  annotations:
+    greymatter.io/inject-sidecar-to: "9080"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bookinfo-details
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: bookinfo-details
+        version: v1
+    spec:
+      # serviceAccountName: bookinfo-details
+      containers:
+        - name: details
+          image: docker.io/istio/examples-bookinfo-details-v1:1.17.0
+          imagePullPolicy: IfNotPresent
+          ### 3. greymatter.io does not need to expose any ports on the application container
+          ### Everything goes through the sidecar
+          # ports:
+          # - containerPort: 9080
+          securityContext:
+            runAsUser: 1000
+---
+##################################################################################################
+# Ratings service
+##################################################################################################
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: ratings
+#   labels:
+#     app: ratings
+#     service: ratings
+# spec:
+#   ports:
+#   - port: 9080
+#     name: http
+#   selector:
+#     app: ratings
+# ---
+# apiVersion: v1
+# kind: ServiceAccount
+# metadata:
+#   name: bookinfo-ratings
+#   labels:
+#     account: ratings
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  ### Change the name to prevent name collision in greymatter.io
+  name: bookfino-ratings-v1
+  labels:
+    app: bookinfo-ratings
+    version: v1
+  ### Annotation for greymatter.io sidecar injection
+  annotations:
+    greymatter.io/inject-sidecar-to: "9080"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bookinfo-ratings
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: bookinfo-ratings
+        version: v1
+    spec:
+      # serviceAccountName: bookinfo-ratings
+      containers:
+        - name: ratings
+          image: docker.io/istio/examples-bookinfo-ratings-v1:1.17.0
+          imagePullPolicy: IfNotPresent
+          ### 3. greymatter.io does not need to expose any ports on the application container
+          ### Everything goes through the sidecar
+          # ports:
+          # - containerPort: 9080
+          securityContext:
+            runAsUser: 1000
+---
+##################################################################################################
+# Reviews service
+##################################################################################################
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: reviews
+#   labels:
+#     app: reviews
+#     service: reviews
+# spec:
+#   ports:
+#   - port: 9080
+#     name: http
+#   selector:
+#     app: reviews
+# ---
+# apiVersion: v1
+# kind: ServiceAccount
+# metadata:
+#   name: bookinfo-reviews
+#   labels:
+#     account: reviews
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  ### Change the name to prevent name collision in greymatter.io
+  name: bookinfo-reviews-v1
+  labels:
+    app: bookinfo-reviews
+    version: v1
+  ### 2. Annotation for greymatter.io sidecar injection
+  annotations:
+    greymatter.io/inject-sidecar-to: "9080"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bookinfo-reviews
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: bookinfo-reviews
+        version: v1
+    spec:
+      # serviceAccountName: bookinfo-reviews
+      containers:
+        - name: reviews
+          image: docker.io/istio/examples-bookinfo-reviews-v1:1.17.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LOG_DIR
+              value: "/tmp/logs"
+          ### 3. greymatter.io does not need to expose any ports on the application container
+          ### Everything goes through the sidecar
+          # ports:
+          # - containerPort: 9080
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: wlp-output
+              mountPath: /opt/ibm/wlp/output
+          securityContext:
+            runAsUser: 1000
+      volumes:
+        - name: wlp-output
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  ### Change the name to prevent name collision in greymatter.io
+  name: bookinfo-reviews-v2
+  labels:
+    app: bookinfo-reviews
+    version: v2
+  ### 2. Annotation for greymatter.io sidecar injection
+  annotations:
+    greymatter.io/inject-sidecar-to: "9080"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bookinfo-reviews
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: bookinfo-reviews
+        version: v2
+    spec:
+      # serviceAccountName: bookinfo-reviews
+      containers:
+        - name: reviews
+          image: docker.io/istio/examples-bookinfo-reviews-v2:1.17.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LOG_DIR
+              value: "/tmp/logs"
+            ### Added Ratings Hostname variable so that reviews can route to localhost instead of a service name
+            - name: RATINGS_HOSTNAME
+              value: 127.0.0.1
+          ### 3. greymatter.io does not need to expose any ports on the application container
+          # ports:
+          # - containerPort: 9080
+          volumeMounts:
+            ### Added volume for server.xml configMap to change the port on the service
+            - mountPath: /opt/ol/wlp/usr/servers/defaultServer/server.xml
+              name: reviews-server
+              subPath: server.xml
+            ###
+            - name: tmp
+              mountPath: /tmp
+            - name: wlp-output
+              mountPath: /opt/ibm/wlp/output
+          securityContext:
+            runAsUser: 1000
+      volumes:
+        - name: wlp-output
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        ### Added volume for server.xml configMap to change the port on the service
+        - name: reviews-server
+          configMap:
+            defaultMode: 420
+            name: reviews-server
+        ###
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  ### Change the name to prevent name collision in greymatter.io
+  name: bookinfo-reviews-v3
+  labels:
+    app: bookinfo-reviews
+    version: v3
+  ### 2. Annotation for greymatter.io sidecar injection
+  annotations:
+    greymatter.io/inject-sidecar-to: "9080"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bookinfo-reviews
+      version: v3
+  template:
+    metadata:
+      labels:
+        app: bookinfo-reviews
+        version: v3
+    spec:
+      # serviceAccountName: bookinfo-reviews
+      containers:
+        - name: reviews
+          image: docker.io/istio/examples-bookinfo-reviews-v3:1.17.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LOG_DIR
+              value: "/tmp/logs"
+            ### Added Ratings Hostname variable so that reviews can route to localhost instead of a service name
+            - name: RATINGS_HOSTNAME
+              value: 127.0.0.1
+            - name: STAR_COLOR
+              value: "red"
+          ### 3. greymatter.io does not need to expose any ports on the application container
+          # ports:
+          # - containerPort: 9080
+          ### 3. greymatter.io does not need to expose any ports on the application container
+          # ports:
+          # - containerPort: 9080
+          volumeMounts:
+            ### Added volume for server.xml configMap to change the port on the service
+            - mountPath: /opt/ol/wlp/usr/servers/defaultServer/server.xml
+              name: reviews-server
+              subPath: server.xml
+            ###
+            - name: tmp
+              mountPath: /tmp
+            - name: wlp-output
+              mountPath: /opt/ibm/wlp/output
+          securityContext:
+            runAsUser: 1000
+      volumes:
+        - name: wlp-output
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+          ### Added volume for server.xml configMap to change the port on the service
+        - name: reviews-server
+          configMap:
+            defaultMode: 420
+            name: reviews-server
+        ###
+---
+##################################################################################################
+# Productpage services
+##################################################################################################
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: productpage
+#   labels:
+#     app: productpage
+#     service: productpage
+# spec:
+#   ports:
+#   - port: 9080
+#     name: http
+#   selector:
+#     app: productpage
+# ---
+# apiVersion: v1
+# kind: ServiceAccount
+# metadata:
+#   name: bookinfo-productpage
+#   labels:
+#     account: productpage
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  ### Change the name to prevent name collision in greymatter.io
+  name: bookinfo-productpage-v1
+  labels:
+    app: bookinfo-productpage
+    version: v1
+  ### 2. Annotation for greymatter.io sidecar injection
+  annotations:
+    greymatter.io/inject-sidecar-to: "9080"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bookinfo-productpage
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: bookinfo-productpage
+        version: v1
+    spec:
+      # serviceAccountName: bookinfo-productpage
+      containers:
+        - name: productpage
+          image: docker.io/istio/examples-bookinfo-productpage-v1:1.17.0
+          imagePullPolicy: IfNotPresent
+          ### 3. greymatter.io does not need to expose any ports on the application container
+          # ports:
+          # - containerPort: 9080
+          command: ["python"]
+          args: ["productpage.py", "9090"]
+          env:
+            - name: DETAILS_HOSTNAME
+              value: "127.0.0.1"
+            - name: RATINGS_HOSTNAME
+              value: "127.0.0.1"
+            - name: REVIEWS_HOSTNAME
+              value: "127.0.0.1"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            runAsUser: 1000
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+### Added volume for server.xml configMap to change the port on the service
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reviews-server
+data:
+  server.xml: |-
+
+    <server description="Sample Liberty server">
+
+        <featureManager>
+            <feature>jaxrs-2.0</feature>
+            <feature>jsonp-1.0</feature>
+        </featureManager>
+
+        <httpEndpoint host="*" httpPort="9090" httpsPort="-1"
+                      id="defaultHttpEndpoint"/>
+
+        <webContainer deferServletLoad="false"/>
+        <applicationMonitor dropinsEnabled="false" updateTrigger="mbean"/>
+        <config updateTrigger="mbean"/>
+
+
+        <executor coreThreads="5"/>
+
+        <webApplication contextRoot="/" id="reviews-app" location="reviews-application-1.0.war" name="reviews-app"/>
+
+    </server>
