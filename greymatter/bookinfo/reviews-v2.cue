@@ -6,22 +6,21 @@ import (
 	"bookinfo.module/greymatter:globals"
 )
 
-
 Reviews_V2: gsl.#Service & {
 	// A context provides global information from globals.cue
 	// to your service definitions.
 	context: Reviews_V2.#NewContext & globals
 
-	// name must follow the pattern namespace/name
-	name:          "reviews-v2"
-	display_name:  "Bookinfo Reviews V2"
-	version:       "v1.0.0"
-	description:   "EDIT ME"
-	api_endpoint:              "https://\(context.globals.edge_host)/services/\(context.globals.namespace)/\(name)/"
-	api_spec_endpoint:         "https://\(context.globals.edge_host)/services/\(context.globals.namespace)/\(name)/"
-	business_impact:           "low"
-	owner: "Bookinfo"
-	capability: ""
+	name:              "reviews-v2"
+	display_name:      "Bookinfo Reviews v2"
+	version:           "v2.0.0"
+	description:       "EDIT ME"
+	api_endpoint:      "https://\(context.globals.edge_host)/\(context.globals.namespace)/\(name)"
+	api_spec_endpoint: "https://\(context.globals.edge_host)/\(context.globals.namespace)/\(name)"
+	business_impact:   "low"
+	owner:             "Library"
+	capability:        ""
+
 	health_options: {
 		tls: gsl.#MTLSUpstream
 	}
@@ -30,27 +29,26 @@ Reviews_V2: gsl.#Service & {
 		(name): {
 			gsl.#HTTPListener
 			gsl.#MTLSListener
-			
+
 			//  NOTE: this must be filled out by a user. Impersonation allows other services to act on the behalf of identities
 			//  inside the system. Please uncomment if you wish to enable impersonation. If the servers list if left empty,
 			//  all traffic will be blocked.
-			//	filters: [
+			// filters: [
 			//    gsl.#ImpersonationFilter & {
-			//		#options: {
-			//			servers: ""
-			//			caseSensitive: false
-			//		}
+			//  #options: {
+			//   servers: ""
+			//   caseSensitive: false
+			//  }
 			//    }
-			//	]
+			// ]
 			routes: {
 				"/": {
 					upstreams: {
 						"local": {
-							
 							instances: [
 								{
 									host: "127.0.0.1"
-									port: 443
+									port: 9090
 								},
 							]
 						}
@@ -59,20 +57,37 @@ Reviews_V2: gsl.#Service & {
 			}
 		}
 	}
+	egress: {
+		"backends": {
+			gsl.#HTTPListener
+			custom_headers: [
+				{
+					key:   "x-forwarded-proto"
+					value: "https"
+				},
+			]
+			port: context.globals.custom.default_egress
+			routes: {
+				"/ratings/": {
+					prefix_rewrite: "/ratings/"
+					upstreams: {
+						"ratings-v1": {
+							gsl.#MTLSUpstream
+							namespace: "bookinfo"
+						}
+					}
+				}
+			}
+		}
+	}
 
-
-	
-	// Edge config for the Reviews-V2 service.
-	// These configs are REQUIRED for your service to be accessible
-	// outside your cluster/mesh.
 	edge: {
 		edge_name: "edge"
-		routes: "/services/\(context.globals.namespace)/\(name)": upstreams: (name): {
-			namespace: context.globals.namespace
+		routes: "/bookinfo/reviews-v2": upstreams: (name): {
+			namespace: "bookinfo"
 			gsl.#MTLSUpstream
 		}
 	}
-	
 }
 
 exports: "reviews-v2": Reviews_V2

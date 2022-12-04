@@ -21,11 +21,11 @@ Edge: gsl.#Service & {
 	display_name:      "Bookinfo Edge"
 	version:           "v1.8.1"
 	description:       "Edge ingress for bookinfo"
-	api_endpoint:              "N/A"
-	api_spec_endpoint:         "N/A"
-	business_impact:           "high"
-	owner: "Bookinfo"
-	capability: ""
+	api_endpoint:      "N/A"
+	api_spec_endpoint: "N/A"
+	business_impact:   "high"
+	owner:             "Bookinfo"
+	capability:        ""
 	health_options: {
 		tls: gsl.#MTLSUpstream
 	}
@@ -35,12 +35,13 @@ Edge: gsl.#Service & {
 			gsl.#HTTPListener
 			gsl.#MTLSListener
 			port: 10809
-			filters: [
-				gsl.#InheadersFilter
-            ]	
 
-			routes: "/": upstreams: (name): { 
-				namespace: context.globals.namespace 
+			filters: [
+				gsl.#InheadersFilter,
+			]
+
+			routes: "/": upstreams: (name): {
+				namespace: context.globals.namespace
 			}
 		}
 	}

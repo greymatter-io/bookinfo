@@ -6,24 +6,27 @@ import (
 	"bookinfo.module/greymatter:globals"
 )
 
-Reviews_V3: gsl.#Service & {
+Ratings: gsl.#Service & {
 	// A context provides global information from globals.cue
 	// to your service definitions.
-	context: Reviews_V3.#NewContext & globals
+	context: Ratings.#NewContext & globals
 
-	name:              "reviews-v3"
-	display_name:      "Bookinfo Reviews v3"
-	version:           "v3.0.0"
-	description:       "EDIT ME"
-	api_endpoint:      "https://\(context.globals.edge_host)/\(context.globals.namespace)/\(name)"
-	api_spec_endpoint: "https://\(context.globals.edge_host)/\(context.globals.namespace)/\(name)"
-	business_impact:   "low"
-	owner:             "Library"
-	capability:        ""
+	name:                      "ratings"
+	display_name:              "Bookinfo Ratings"
+	version:                   "v1.0.0"
+	description:               "EDIT ME"
+	api_endpoint:              "https://\(context.globals.edge_host)/\(context.globals.namespace)/\(name)"
+	api_spec_endpoint:         "https://\(context.globals.edge_host)/\(context.globals.namespace)/\(name)"
+	business_impact:           "low"
+	owner:                     "Library"
+	capability:                ""
+	enable_instance_metrics:   true
+	enable_historical_metrics: true
 
 	health_options: {
 		tls: gsl.#MTLSUpstream
 	}
+	// Ratings -> ingress to your container
 	ingress: {
 		(name): {
 			gsl.#HTTPListener
@@ -47,32 +50,9 @@ Reviews_V3: gsl.#Service & {
 							instances: [
 								{
 									host: "127.0.0.1"
-									port: 9090
+									port: 9080
 								},
 							]
-						}
-					}
-				}
-			}
-		}
-	}
-	egress: {
-		"backends": {
-			gsl.#HTTPListener
-			custom_headers: [
-				{
-					key:   "x-forwarded-proto"
-					value: "https"
-				},
-			]
-			port: context.globals.custom.default_egress
-			routes: {
-				"/ratings/": {
-					// prefix_rewrite: "/ratings/"
-					upstreams: {
-						"ratings-v1": {
-							namespace: "bookinfo"
-							gsl.#MTLSUpstream
 						}
 					}
 				}
@@ -82,11 +62,11 @@ Reviews_V3: gsl.#Service & {
 
 	edge: {
 		edge_name: "edge"
-		routes: "/bookinfo/reviews-v3": upstreams: (name): {
+		routes: "/bookinfo/ratings": upstreams: (name): {
 			namespace: "bookinfo"
 			gsl.#MTLSUpstream
 		}
 	}
 }
 
-exports: "reviews-v3": Reviews_V3
+exports: "ratings": Ratings
