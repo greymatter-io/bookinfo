@@ -9,6 +9,7 @@ import (
 	gsl "greymatter.io/gsl/v1"
 
 	"bookinfo.module/greymatter:globals"
+	policies "bookinfo.module/greymatter/policies"
 )
 
 Edge: gsl.#Service & {
@@ -33,16 +34,52 @@ Edge: gsl.#Service & {
 		// Edge -> HTTP ingress to your container
 		(name): {
 			gsl.#HTTPListener
-			gsl.#MTLSListener
+
 			port: 10809
 
 			filters: [
-				gsl.#InheadersFilter,
+				//  gsl.#InheadersFilter,
+				gsl.#RBACFilter & {
+					#options: {
+						policies.#RBAC.#DenyAll
+					}
+				},
+				gsl.#OPAFilter & {
+					#options: {
+						with_request_body: {
+							max_request_bytes:     1024
+							allow_partial_message: true
+							pack_as_bytes:         true
+						}
+						// discovered_host: {
+						//  service_name: "opa"
+						//  namespace:    "bookinfo"
+						// }
+						static_host: {
+							target_uri:  "localhost:9191"
+							stat_prefix: "opa"
+						}
+						failure_mode_allow: false
+						status_on_error: code: "ServiceUnavailable"
+					}
+				},
 			]
 
-			routes: "/": upstreams: (name): {
-				namespace: context.globals.namespace
-			}
+			routes:
+				"/": {
+					upstreams: {
+						// "opa": {
+
+						//  http2_protocol_options: {
+						//   allow_connect: true
+						//  }
+						//  namespace: "bookinfo"
+						// }
+						(name): {
+							namespace: context.globals.namespace
+						}
+					}
+				}
 		}
 	}
 }

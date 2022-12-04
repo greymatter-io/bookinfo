@@ -14,7 +14,7 @@ Reviews_V2: gsl.#Service & {
 	name:              "reviews-v2"
 	display_name:      "Bookinfo Reviews v2"
 	version:           "v2.0.0"
-	description:       "EDIT ME"
+	description:       "Holds reviews for books"
 	api_endpoint:      "https://\(context.globals.edge_host)/\(context.globals.namespace)/\(name)"
 	api_spec_endpoint: "https://\(context.globals.edge_host)/\(context.globals.namespace)/\(name)"
 	business_impact:   "low"
@@ -28,7 +28,7 @@ Reviews_V2: gsl.#Service & {
 	ingress: {
 		(name): {
 			gsl.#HTTPListener
-			gsl.#MTLSListener
+			// gsl.#MTLSListener
 
 			//  NOTE: this must be filled out by a user. Impersonation allows other services to act on the behalf of identities
 			//  inside the system. Please uncomment if you wish to enable impersonation. If the servers list if left empty,
@@ -69,10 +69,8 @@ Reviews_V2: gsl.#Service & {
 			port: context.globals.custom.default_egress
 			routes: {
 				"/ratings/": {
-					prefix_rewrite: "/ratings/"
 					upstreams: {
-						"ratings-v1": {
-							gsl.#MTLSUpstream
+						"ratings": {
 							namespace: "bookinfo"
 						}
 					}
@@ -83,9 +81,11 @@ Reviews_V2: gsl.#Service & {
 
 	edge: {
 		edge_name: "edge"
-		routes: "/bookinfo/reviews-v2": upstreams: (name): {
-			namespace: "bookinfo"
-			gsl.#MTLSUpstream
+		routes: "/bookinfo/reviews-v2": {
+			prefix_rewrite: "/"
+			upstreams: (name): {
+				namespace: "bookinfo"
+			}
 		}
 	}
 }

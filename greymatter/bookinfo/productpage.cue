@@ -14,9 +14,9 @@ Productpage: gsl.#Service & {
 	name:                      "productpage"
 	display_name:              "Bookinfo Productpage"
 	version:                   "v1.0.0"
-	description:               "EDIT ME"
-	api_endpoint:              "https://\(context.globals.edge_host)/productpage"
-	api_spec_endpoint:         "https://\(context.globals.edge_host)/productpage"
+	description:               "Book info product web app"
+	api_endpoint:              "http://\(context.globals.edge_host)/productpage"
+	api_spec_endpoint:         "http://\(context.globals.edge_host)/producttester"
 	business_impact:           "low"
 	owner:                     "Library"
 	capability:                "Web"
@@ -30,7 +30,7 @@ Productpage: gsl.#Service & {
 	ingress: {
 		(name): {
 			gsl.#HTTPListener
-			gsl.#MTLSListener
+			// gsl.#MTLSListener
 
 			//  NOTE: this must be filled out by a user. Impersonation allows other services to act on the behalf of identities
 			//  inside the system. Please uncomment if you wish to enable impersonation. If the servers list if left empty,
@@ -74,47 +74,46 @@ Productpage: gsl.#Service & {
 			port: context.globals.custom.default_egress
 			routes: {
 				"/details/": {
-					// prefix_rewrite: "/details/"
+
 					upstreams: {
-						"details-v1": {
-							gsl.#MTLSUpstream
+						"details": {
+							// gsl.#MTLSUpstream
 							namespace: "bookinfo"
 						}
 					}
 				}
 				"/ratings/": {
-					// prefix_rewrite: "/ratings/"
+
 					upstreams: {
-						"ratings-v1": {
-							gsl.#MTLSUpstream
+						"ratings": {
+							// gsl.#MTLSUpstream
 							namespace: "bookinfo"
 						}
 					}
 				}
 				"/reviews/": {
-					// prefix_rewrite: "/reviews/"
 					upstreams: {
 						"reviews-v1": {
-							gsl.#MTLSUpstream
+							// gsl.#MTLSUpstream
 							namespace:       "bookinfo"
 							traffic_options: gsl.#SplitTraffic & {
-								weight: 100
+								weight: 80
 							}
 						}
 						"reviews-v2": {
-							gsl.#MTLSUpstream
+							// gsl.#MTLSUpstream
 							namespace:       "bookinfo"
 							traffic_options: gsl.#SplitTraffic & {
-								weight: 0
+								weight: 20
 							}
 						}
-						"reviews-v3": {
-							gsl.#MTLSUpstream
-							namespace:       "bookinfo"
-							traffic_options: gsl.#SplitTraffic & {
-								weight: 0
-							}
-						}
+						// "reviews-v3": {
+						//  // gsl.#MTLSUpstream
+						//  namespace:       "bookinfo"
+						//  traffic_options: gsl.#SplitTraffic & {
+						//   weight: 33
+						//  }
+						// }
 					}
 				}
 			}
@@ -125,13 +124,29 @@ Productpage: gsl.#Service & {
 	// outside your cluster/mesh.
 	edge: {
 		edge_name: "edge"
-		routes: "/": {
-			//prefix_rewrite: "/productpage/"
-			upstreams:
-				(name): {
-					gsl.#MTLSUpstream
-					namespace: "bookinfo"
-				}
+		routes: {
+			"/": {
+				prefix_rewrite: "/productpage"
+				// redirects: [
+				//  {
+				//   from:          "^" + "/productpage/" + "$"
+				//   to:            "/productpage"
+				//   redirect_type: "permanent"
+				//  },
+				// ]
+				upstreams:
+					(name): {
+						namespace: "bookinfo"
+					}
+			}
+			"/producttester": {
+				prefix_rewrite: "/"
+				upstreams:
+					(name): {
+						// gsl.#MTLSUpstream
+						namespace: "bookinfo"
+					}
+			}
 		}
 	}
 }

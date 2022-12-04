@@ -12,11 +12,11 @@ package v1
 
 	zone_key:                  #DEFAULT_ZONE
 	name:                      string
-	namespace:				   string | *context.globals.namespace
+	namespace:                 string | *context.globals.namespace
 	mesh_id:                   string | *context.globals.mesh.name
 	service_id:                name
-	api_endpoint:              string
-	api_spec_endpoint:         string
+	api_endpoint?:             string
+	api_spec_endpoint?:        string
 	description?:              string
 	enable_instance_metrics:   bool | *true
 	enable_historical_metrics: bool | *true
@@ -85,7 +85,7 @@ package v1
 		port: context.globals.sidecar.healthcheck_port
 		upstream: {
 			namespace: *"" | _
-			name: *"greymatter-datastore" | _
+			name:      *"greymatter-datastore" | _
 			if health_options.tls != _|_ {
 				health_options.tls
 			}

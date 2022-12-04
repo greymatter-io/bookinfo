@@ -14,7 +14,7 @@ Details: gsl.#Service & {
 	name:                      "details"
 	display_name:              "Bookinfo Details"
 	version:                   "v1.0.0"
-	description:               "EDIT ME"
+	description:               "Provides product details on books"
 	api_endpoint:              "https://\(context.globals.edge_host)/\(context.globals.namespace)/\(name)"
 	api_spec_endpoint:         "https://\(context.globals.edge_host)/\(context.globals.namespace)/\(name)"
 	business_impact:           "low"
@@ -30,7 +30,7 @@ Details: gsl.#Service & {
 	ingress: {
 		(name): {
 			gsl.#HTTPListener
-			gsl.#MTLSListener
+			// gsl.#MTLSListener
 
 			//  NOTE: this must be filled out by a user. Impersonation allows other services to act on the behalf of identities
 			//  inside the system. Please uncomment if you wish to enable impersonation. If the servers list if left empty,
@@ -62,9 +62,11 @@ Details: gsl.#Service & {
 
 	edge: {
 		edge_name: "edge"
-		routes: "/bookinfo/details": upstreams: (name): {
-			namespace: "bookinfo"
-			gsl.#MTLSUpstream
+		routes: "/bookinfo/details": {
+			prefix_rewrite: "/"
+			upstreams: (name): {
+				namespace: "bookinfo"
+			}
 		}
 	}
 }

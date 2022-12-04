@@ -125,8 +125,8 @@ _#extractSubset: {
 	sni_cluster: #options
 }
 #ExtAuthZTCPFilter: {
-	#options:  envoy_ext_authz_tcp.#ExtAuthz
-	ext_authz: #options
+	#options:       envoy_ext_authz_tcp.#ExtAuthz
+	external_authz: #options
 }
 #JWTSecurityTCPFilter: {
 	#options:    network.#JwtSecurityTcpConfig
@@ -171,7 +171,7 @@ _#extractSubset: {
 	"envoy_cors"?:                      envoy_cors.#Cors
 	"envoy_csrf"?:                      envoy_csrf.#CsrfPolicy
 	"envoy_dynamic_forward_proxy"?:     envoy_dynamic_forward_proxy.#FilterConfig
-	"envoy_external_authz"?:            envoy_ext_authz.#ExtAuthz
+	"envoy_ext_authz"?:                 envoy_ext_authz.#ExtAuthz
 	"envoy_fault"?:                     envoy_fault.#HTTPFault
 	"envoy_grpc_http1_bridge"?:         envoy_grpc_http_bridge.#Config
 	"envoy_grpc_http1_reverse_bridge"?: envoy_grpc_http_reverse_bridge.#FilterConfig
@@ -217,7 +217,7 @@ _#lookupFilters: {
 	dynamic_forward_proxy:     "envoy_dynamic_forward_proxy"
 	echo:                      "envoy_echo"
 	ensure_variables:          "gm_ensure-variables"
-	external_authz:            "envoy_external_authz"
+	external_authz:            "envoy_ext_authz"
 	fault_injection:           "envoy_fault"
 	grpc_http1_bridge:         "envoy_grpc_http1_bridge"
 	grpc_http1_reverse_bridge: "envoy_grpc_http1_reverse_bridge"
@@ -643,15 +643,16 @@ _#lookupFilters: {
 			discovered_host: {
 				// Note: TLS should be configured on the cluster linking OPA with the service
 				service_name: string
+				namespace:    string
 				authority?:   string // envoy defaults this to the cluster_name
 			}
 		} | {
 			static_host: {
-				target_uri: string
+				target_uri:  string
+				stat_prefix: string
 				envoy.#GrpcService_GoogleGrpc
 			}
 		}
-		request_timeout?: string
 
 		failure_mode_allow: *false | _
 		//escape hatch
@@ -659,18 +660,23 @@ _#lookupFilters: {
 	}
 
 	external_authz: envoy_ext_authz.#ExtAuthz & {
+		transport_api_version: "V3"
 		// skip custom fields, only copy fields found in #ExtAuthz
 		for k, v in #options if !list.Contains(["discovered_host", "static_host", "request_timeout"], k) {
 			(k): v
 		}
 
 		grpc_service: {
-			timeout: #options.request_timeout
-
 			if #options.discovered_host != _|_ {
-				envoy_grpc: {
-					cluster_name: #options.discovered_host.service_name
-					authority:    #options.discovered_host.authority
+				envoy_grpc: this = {
+					if #options.discovered_host.namespace == "" {
+						cluster_name: #options.discovered_host.service_name
+					}
+
+					if #options.discovered_host.namespace != "" {
+						cluster_name: "\(#options.discovered_host.namespace)-\(#options.discovered_host.service_name)"
+					}
+					authority: *#options.discovered_host.authority | this.cluster_name
 				}
 			}
 			if #options.static_host != _|_ {
