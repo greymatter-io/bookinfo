@@ -25,7 +25,7 @@ spec:
           secretName: greymatter-sync-secret
       containers:
       - name: greymatter-sync
-        image: greymatter.jfrog.io/release-oci/greymatter-cli:4.5.7
+        image: greymatter.jfrog.io/internal-oci/cli:jack-test
         imagePullPolicy: Always
         command: ["/usr/local/bin/greymatter"]
         args: [
@@ -34,7 +34,7 @@ spec:
           "sync", 
           "--ssh-private-key", "/var/lib/greymatter/.ssh/ssh-private-key", 
           "--git", "--forever", 
-          "--branch", "main",
+          "--branch", "webinar-demo-1",
           "--interval", "1s", 
           "--git-dir", "/var/lib/greymatter/checkout", 
           "-e", "",
@@ -48,7 +48,7 @@ spec:
             cpu: "200m"
             memory: "512Mi"
           requests:
-            cpu: "50m"
+            cpu: "150m"
             memory: "128Mi"
         volumeMounts:
         - name: ssh-private-key
@@ -62,7 +62,6 @@ spec:
             configMapKeyRef:
               name: greymatter-sync-config
               key: GREYMATTER_GIT_REMOTE
-
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -70,5 +69,4 @@ metadata:
   name: greymatter-sync-config
   namespace: bookinfo
 data:
-  # property-like keys; each key maps to a simple value
   GREYMATTER_GIT_REMOTE: "git@github.com:jack-bischoff/bookinfo"
