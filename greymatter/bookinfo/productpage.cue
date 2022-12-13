@@ -7,47 +7,25 @@ import (
 )
 
 Productpage: gsl.#Service & {
-	// A context provides global information from globals.cue
-	// to your service definitions.
 	context: Productpage.#NewContext & globals
 
-	name:                      "productpage"
-	display_name:              "Bookinfo Productpage"
-	version:                   "v1.0.0"
-	description:               "EDIT ME"
-	api_endpoint:              "https://\(context.globals.edge_host)/productpage"
-	api_spec_endpoint:         "https://\(context.globals.edge_host)/productpage"
-	business_impact:           "low"
-	owner:                     "Library"
-	capability:                "Web"
-	enable_instance_metrics:   true
-	enable_historical_metrics: true
+	name:              "productpage"
+	display_name:      "Bookinfo Productpage"
+	version:           "v1.0.0"
+	description:       "Book info product web app"
+	api_endpoint:      "http://\(context.globals.edge_host)/"
+	api_spec_endpoint: "http://\(context.globals.edge_host)/"
+	business_impact:   "medium"
+	owner:             "Library"
+	capability:        "Web"
 
-	health_options: {
-		tls: gsl.#MTLSUpstream
-	}
-	// Productpage -> ingress to your container
 	ingress: {
 		(name): {
 			gsl.#HTTPListener
-			gsl.#MTLSListener
-
-			//  NOTE: this must be filled out by a user. Impersonation allows other services to act on the behalf of identities
-			//  inside the system. Please uncomment if you wish to enable impersonation. If the servers list if left empty,
-			//  all traffic will be blocked.
-			// filters: [
-			//    gsl.#ImpersonationFilter & {
-			//  #options: {
-			//   servers: ""
-			//   caseSensitive: false
-			//  }
-			//    }
-			// ]
 			routes: {
 				"/": {
 					upstreams: {
 						"local": {
-
 							instances: [
 								{
 									host: "127.0.0.1"
@@ -60,59 +38,50 @@ Productpage: gsl.#Service & {
 			}
 		}
 	}
+	
+	// The app needs to know where to find it's dependencies
+	// in the mesh. We create egress routes from the apps sidecar
+	// below so it can easily reach by requesting to localhost:9080.
 	egress: {
-		"backends": {
+		"egress-to-services": {
 			gsl.#HTTPListener
-
-			custom_headers: [
-				{
-					key:   "x-forwarded-proto"
-					value: "https"
-				},
-			]
-
 			port: context.globals.custom.default_egress
 			routes: {
 				"/details/": {
-					// prefix_rewrite: "/details/"
+					prefix_rewrite: "/details/"
 					upstreams: {
-						"details-v1": {
-							gsl.#MTLSUpstream
+						"details": {
 							namespace: "bookinfo"
 						}
 					}
 				}
 				"/ratings/": {
-					// prefix_rewrite: "/ratings/"
+					prefix_rewrite: "/ratings/"
 					upstreams: {
-						"ratings-v1": {
-							gsl.#MTLSUpstream
+						"ratings": {
 							namespace: "bookinfo"
 						}
 					}
 				}
+
+				// We split traffic to v2/v3 to mimic what a canary 
+				// deployment might look like. We can slowly rollout new
+				// versions of services to test quality of service 
+				// for users. Default behavior is to "split" but it 
+				// can me used to shadow as well.
 				"/reviews/": {
-					// prefix_rewrite: "/reviews/"
+					prefix_rewrite: "/reviews/"
 					upstreams: {
-						"reviews-v1": {
-							gsl.#MTLSUpstream
-							namespace:       "bookinfo"
-							traffic_options: gsl.#SplitTraffic & {
-								weight: 100
-							}
-						}
 						"reviews-v2": {
-							gsl.#MTLSUpstream
-							namespace:       "bookinfo"
-							traffic_options: gsl.#SplitTraffic & {
-								weight: 0
+							namespace: "bookinfo"
+							traffic_options: {
+								weight: 50
 							}
 						}
 						"reviews-v3": {
-							gsl.#MTLSUpstream
-							namespace:       "bookinfo"
-							traffic_options: gsl.#SplitTraffic & {
-								weight: 0
+							namespace: "bookinfo"
+							traffic_options: {
+								weight: 50
 							}
 						}
 					}
@@ -120,18 +89,19 @@ Productpage: gsl.#Service & {
 			}
 		}
 	}
-	// Edge config for the Productpage service.
-	// These configs are REQUIRED for your service to be accessible
-	// outside your cluster/mesh.
+
+	// Deploy productpage to the root of the application edge node.
+	// This is to serve the web app first above all other services.
 	edge: {
 		edge_name: "edge"
-		routes: "/": {
-			//prefix_rewrite: "/productpage/"
-			upstreams:
-				(name): {
-					gsl.#MTLSUpstream
-					namespace: "bookinfo"
+		routes: {
+			"/": {
+				upstreams: {
+					(name): {
+						namespace: context.globals.namespace
+					}
 				}
+			}
 		}
 	}
 }
