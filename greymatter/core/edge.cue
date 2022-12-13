@@ -33,12 +33,9 @@ Edge: gsl.#Service & {
 		// Edge -> HTTP ingress to your container
 		(name): {
 			gsl.#HTTPListener
-			gsl.#MTLSListener
+			gsl.#TLSListener
 			port: 10809
 
-			filters: [
-				gsl.#InheadersFilter,
-			]
 
 			routes: "/": upstreams: (name): {
 				namespace: context.globals.namespace
