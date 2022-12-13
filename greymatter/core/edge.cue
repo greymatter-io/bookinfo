@@ -9,7 +9,7 @@ import (
 	gsl "greymatter.io/gsl/v1"
 
 	"bookinfo.module/greymatter:globals"
-	policies "bookinfo.module/greymatter/policies"
+	// policies "bookinfo.module/greymatter/policies"
 )
 
 Edge: gsl.#Service & {
