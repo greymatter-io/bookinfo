@@ -1,4 +1,3 @@
-// Copyright 2022, greymatter.io Inc., All rights reserved.  
 package v1
 
 import (
@@ -219,7 +218,7 @@ _#lookupFilters: {
 	echo:                      "envoy_echo"
 	ensure_variables:          "gm_ensure-variables"
 	external_authz:            "envoy_ext_authz"
-	fault_injection:           "envoy_fault"
+	fault:                     "envoy_fault"
 	grpc_http1_bridge:         "envoy_grpc_http1_bridge"
 	grpc_http1_reverse_bridge: "envoy_grpc_http1_reverse_bridge"
 	grpc_json_transcoder:      "envoy_grpc_json_transcoder"
@@ -311,7 +310,8 @@ _#lookupFilters: {
 			remote_jwks: *{
 				http_uri: {
 					cluster: *#options.provider_cluster | _
-					uri:     _provider_host
+					uri:     _provider_host + "/protocol/openid-connect/certs"
+					timeout: *"1s" | _
 				}
 			} | envoy_jwt_authn.#RemoteJwks
 			local_jwks?: envoy.#DataSource
@@ -363,6 +363,16 @@ _#lookupFilters: {
 	// intermediate values
 	_provider_host: "\(#options.provider_host)/\(#options.authRealms)/\(#options.realm)"
 
+	oidc_authn: http.#AuthenticationConfig & {
+		// copies all the fields found in  both #authenticationConfig and #options
+		(_#extractSubset & {
+			from: #options
+			into: http.#AuthenticationConfig
+		}).output
+		#options.tls
+		provider: *_provider_host | _
+	}
+
 	oidc_validate: http.#ValidationConfig & {
 
 		TLSConfig: {
@@ -378,16 +388,6 @@ _#lookupFilters: {
 			key:      "access_token"
 			location: *"cookie" | _
 		}
-	}
-
-	oidc_authn: http.#AuthenticationConfig & {
-		// copies all the fields found in  both #authenticationConfig and #options
-		(_#extractSubset & {
-			from: #options
-			into: http.#AuthenticationConfig
-		}).output
-		#options.tls
-		provider: *_provider_host | _
 	}
 
 	ensure_variables: http.#EnsureVariablesConfig & {

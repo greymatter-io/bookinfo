@@ -1,4 +1,3 @@
-// Copyright 2022, greymatter.io Inc., All rights reserved.  
 package v1
 
 import (
@@ -6,6 +5,57 @@ import (
 	"strings"
 	envoy_tcp_proxy "envoyproxy.io/extensions/filters/network/tcp_proxy/v3"
 )
+
+#DEFAULT_ZONE: "default-zone"
+
+#DefaultRBAC: {
+	rules: {
+		action: "ALLOW"
+		policies: {
+			all: {
+				permissions: [
+					{
+						any: true
+					},
+				]
+				principals: [
+					{
+						any: true
+					},
+				]
+			}
+		}
+	}
+}
+
+#DefaultGRPCUpstream: {
+	http2_protocol_options: {
+		allow_connect: true
+	}
+}
+
+#DefaultContext: #GlobalContext & {
+	mesh: {
+		name:                    *"greymatter-mesh" | _
+		datastore_upstream_name: *"datastore" | _
+		operator_namespace:      *"gm-operator" | _
+	}
+
+	sidecar: {
+		// port for ingress traffic, matching the operator 
+		default_ingress_port: *10808 | _
+		// port of the healtcheck service
+		healthcheck_port: *10910 | _
+		// port the sidecar serves metrics requests from
+		metrics_port: *8081 | _
+	}
+
+	spire: {
+		trust_domain: *"greymatter.io" | _
+	}
+
+	edge_host: *"" | _
+}
 
 #SpireCommon: {
 	#context: {
@@ -18,7 +68,7 @@ import (
 		ecdh_curves:            *["X25519:P-256:P-521:P-384"] | [...string]
 		secret_validation_name: *"spiffe://\(#context.spire.trust_domain)" | _
 		// // self 
-		secret_name: *"spiffe://\(#context.spire.trust_domain)/\(#context.mesh.operator_namespace).\(#context.mesh.name).\(#context.service_name)" | _
+		secret_name: *"spiffe://\(#context.spire.trust_domain)/\(#context.mesh.operator_namespace).\(#context.mesh.name).\(#context.namespace)-\(#context.service_name)" | _
 		// other 
 		subject_names: *[ for s in #subjects {"spiffe://\(#context.spire.trust_domain)/\(#context.mesh.operator_namespace).\(#context.mesh.name).\(s)"}] | _
 		set_current_client_cert_details: URI: *true | _
@@ -38,9 +88,9 @@ import (
 	...
 }
 
-#TLSUpstream: {
+#TLSUpstream: #UpstreamTLSSchema & {
 	require_tls: true
-	ssl_config:  #UpstreamSSLConfig & {
+	ssl_config: {
 		protocols:      *["TLS_AUTO"] | _
 		cert_key_pairs: *[
 				{
@@ -49,16 +99,14 @@ import (
 			},
 		] | _
 	}
-	...
 }
 
-#MTLSUpstream: {
+#MTLSUpstream: #UpstreamTLSSchema & {
 	#TLSUpstream
 	ssl_config: trust_file: *"/etc/proxy/tls/sidecar/ca.crt" | _
-	...
 }
 
-#TLSListener: {
+#TLSListener: #ListenerTLSSchema & {
 	force_https: true
 	ssl_config:  #ListenerSSLConfig & {
 		protocols:      *["TLS_AUTO"] | _
@@ -69,16 +117,14 @@ import (
 			},
 		] | _
 	}
-	...
 }
 
-#MTLSListener: {
+#MTLSListener: #ListenerTLSSchema & {
 	#TLSListener
 	ssl_config: {
 		trust_file:           *"/etc/proxy/tls/sidecar/ca.crt" | _
 		require_client_certs: *true | _
 	}
-	...
 }
 
 #ShadowTraffic: {
@@ -89,6 +135,12 @@ import (
 #SplitTraffic: {
 	behavior: "split"
 	weight:   int
+}
+
+// This allows for "drop in object" functionality inside upstreams. Fields are still eventually
+// typed checked
+#Upstream: {
+	...
 }
 
 #TCPListener: self = {
@@ -116,8 +168,8 @@ import (
 	}
 
 	tcp_options: envoy_tcp_proxy.#TcpProxy & {
-		cluster:     *upstream.name | _
-		stat_prefix: *upstream.name | _
+		cluster:     *((*(upstream.namespace + "-") | "") + upstream.name) | _
+		stat_prefix: *cluster | _
 	}
 	metrics_options: #TCPMetricsFilter.#options
 
@@ -156,11 +208,11 @@ import (
 		"fault_injection":  *1 | int
 		"inheaders":        *1 | int
 		"impersonation":    *1 | int
-		"oidc_validate":    *1 | int
 		"oidc_authn":       *1 | int
 		"ensure_variables": *1 | int
 		"jwt_authn":        *1 | int
 
+		"oidc_validate": *2 | int
 		// the greymatter audits pipeline needs info populated by auth
 		"audit": *2 | int
 

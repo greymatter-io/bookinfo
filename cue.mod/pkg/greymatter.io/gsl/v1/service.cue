@@ -1,4 +1,3 @@
-// Copyright 2022, greymatter.io Inc., All rights reserved.  
 package v1
 
 #Service: service = {
@@ -28,14 +27,20 @@ package v1
 	capability?:               string
 	runtime?:                  string
 	documentation?:            string
-	prometheus_job?:           string
+	prometheus_job?:           string	
 	external_links?: [...{title: string, url: string}]
 
 	display_name?: string
 	edge?:         #EdgeConfig
 
+	// 1.x control-api expects connection upgrades
+	// at the proxy level. We enable this field 
+	// in the service so it can be applied on the 
+	// Proxy object.
+	upgrades?:     string
+
 	health_options: {
-		tls?:   #TLSUpstream | #MTLSUpstream
+		tls?:   #UpstreamTLSSchema
 		spire?: #SpireUpstream
 	}
 
@@ -88,7 +93,7 @@ package v1
 			namespace: *"" | _
 			name:      *"greymatter-datastore" | _
 			if health_options.tls != _|_ {
-				health_options.tls
+				{health_options.tls, ...}
 			}
 			if health_options.spire != _|_ {
 				health_options.spire

@@ -25,7 +25,7 @@ spec:
           secretName: greymatter-sync-secret
       containers:
       - name: greymatter-sync
-        image: greymatter.jfrog.io/release-oci/greymatter-cli:4.5.7
+        image: greymatter.jfrog.io/internal-oci/cli:test-alec
         imagePullPolicy: Always
         command: ["/usr/local/bin/greymatter"]
         args: [
@@ -34,7 +34,7 @@ spec:
           "sync", 
           "--ssh-private-key", "/var/lib/greymatter/.ssh/ssh-private-key", 
           "--git", "--forever", 
-          "--branch", "main",
+          "--branch", "alec",
           "--interval", "3s", 
           "--git-dir", "/var/lib/greymatter/checkout", 
           "-e", "",

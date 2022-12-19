@@ -1,4 +1,3 @@
-// Copyright 2022, greymatter.io Inc., All rights reserved.  
 package http
 
 #LocationType: "header" | "cookie" | "queryString" | "metadata"

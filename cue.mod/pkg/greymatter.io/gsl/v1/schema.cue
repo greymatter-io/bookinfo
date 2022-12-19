@@ -1,4 +1,3 @@
-// Copyright 2022, greymatter.io Inc., All rights reserved.  
 package v1
 
 import (
@@ -79,10 +78,10 @@ import (
 	ssl_config?:  api.#ClusterSSLConfig
 }
 
-#UpstreamsSchema: [Upstream=string]: #UpstreamSchema & {name: Upstream}
 #UpstreamSchema: {
 	#UpstreamTLSSchema
 	#UpstreamSecretSchema
+
 	zone_key: #DEFAULT_ZONE
 	name:     string
 
@@ -144,6 +143,9 @@ import (
 
 	route_redirects: [...api.#Redirects]
 	redirects: list.Concat([route_redirects, _default_redirect])
-	upstreams: #UpstreamsSchema
+
+	upstreams: [Upstream=string]: {
+		#UpstreamSchema
+		name: Upstream
+	}
 }
-#RouteRedirect: {}

@@ -66,14 +66,14 @@ spec:
             requests:
               cpu: 100m
               memory: 128Mi
-          volumeMounts:
-            - name: tls-certs
-              mountPath: /etc/proxy/tls/sidecar
+          # volumeMounts:
+          #   - name: tls-certs
+          #     mountPath: /etc/proxy/tls/sidecar
       volumes:
-        - name: tls-certs
-          secret:
-            defaultMode: 420
-            secretName: greymatter-bookinfo-edge-certs
+        # - name: tls-certs
+        #   secret:
+        #     defaultMode: 420
+        #     secretName: greymatter-bookinfo-edge-certs
         - name: opa-policy
           secret:
             secretName: opa-policy
