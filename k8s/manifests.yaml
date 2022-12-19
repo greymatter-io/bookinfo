@@ -14,32 +14,32 @@ spec:
         greymatter.io/cluster: bookinfo-edge
     spec:
       containers:
-        - name: opa
-          image: openpolicyagent/opa:0.46.1-envoy-rootless
-          args: [
-            "run",
-            "--server",
-            "--addr=localhost:8181",
-            "--log-level=debug",
-            "--diagnostic-addr=0.0.0.0:8282",
-            "--set=plugins.envoy_ext_authz_grpc.addr=:9191",
-            "--set=plugins.envoy_ext_authz_grpc.query=data.envoy.authz.allow",
-            "--set=plugins.envoy_ext_authz_grpc.enable-reflection=true",
-            "--set=decision_logs.console=true",
-            "--ignore=.*",
-            "/policy/policy.rego",
-          ]
-          resources:
-            limits:
-              cpu: 200m
-              memory: 512Mi
-            requests:
-              cpu: 50m
-              memory: 128Mi
-          volumeMounts:
-          - readOnly: true
-            mountPath: /policy
-            name: opa-policy
+        # - name: opa
+        #   image: openpolicyagent/opa:0.46.1-envoy-rootless
+        #   args: [
+        #     "run",
+        #     "--server",
+        #     "--addr=localhost:8181",
+        #     "--log-level=debug",
+        #     "--diagnostic-addr=0.0.0.0:8282",
+        #     "--set=plugins.envoy_ext_authz_grpc.addr=:9191",
+        #     "--set=plugins.envoy_ext_authz_grpc.query=data.envoy.authz.allow",
+        #     "--set=plugins.envoy_ext_authz_grpc.enable-reflection=true",
+        #     "--set=decision_logs.console=true",
+        #     "--ignore=.*",
+        #     "/policy/policy.rego",
+        #   ]
+        #   resources:
+        #     limits:
+        #       cpu: 200m
+        #       memory: 512Mi
+        #     requests:
+        #       cpu: 50m
+        #       memory: 128Mi
+        #   volumeMounts:
+        #   - readOnly: true
+        #     mountPath: /policy
+        #     name: opa-policy
         - name: sidecar
           image: greymatter.jfrog.io/release-oci/greymatter-proxy:1.8.1
           imagePullPolicy: Always
@@ -74,9 +74,9 @@ spec:
         #   secret:
         #     defaultMode: 420
         #     secretName: greymatter-bookinfo-edge-certs
-        - name: opa-policy
-          secret:
-            secretName: opa-policy
+        # - name: opa-policy
+        #   secret:
+        #     secretName: opa-policy
       imagePullSecrets:
       - name: gm-docker-secret
 ---

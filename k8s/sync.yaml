@@ -70,4 +70,4 @@ metadata:
   namespace: bookinfo
 data:
   # property-like keys; each key maps to a simple value
-  GREYMATTER_GIT_REMOTE: "git@github.com:greymatter.io/bookinfo.git"
+  GREYMATTER_GIT_REMOTE: "git@github.com:greymatter-io/bookinfo.git"
