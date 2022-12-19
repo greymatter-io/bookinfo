@@ -12,34 +12,18 @@ Reviews_V3: gsl.#Service & {
 	context: Reviews_V3.#NewContext & globals
 
 	name:              "reviews-v3"
-	display_name:      "Bookinfo Reviews v3"
+	display_name:      "Bookinfo Reviews"
 	version:           "v3.0.0"
-	description:       "EDIT ME"
-	api_endpoint:      "https://\(context.globals.edge_host)/\(context.globals.namespace)/\(name)"
-	api_spec_endpoint: "https://\(context.globals.edge_host)/\(context.globals.namespace)/\(name)"
+	description:       "Holds reviews for books"
+	api_endpoint:      "http://\(context.globals.edge_host)/\(context.globals.namespace)/\(name)"
+	api_spec_endpoint: "http://\(context.globals.edge_host)/\(context.globals.namespace)/\(name)"
 	business_impact:   "low"
 	owner:             "Library"
-	capability:        ""
+	capability:        "Web"
 
-	health_options: {
-		tls: gsl.#MTLSUpstream
-	}
 	ingress: {
 		(name): {
 			gsl.#HTTPListener
-			gsl.#MTLSListener
-
-			//  NOTE: this must be filled out by a user. Impersonation allows other services to act on the behalf of identities
-			//  inside the system. Please uncomment if you wish to enable impersonation. If the servers list if left empty,
-			//  all traffic will be blocked.
-			// filters: [
-			//    gsl.#ImpersonationFilter & {
-			//  #options: {
-			//   servers: ""
-			//   caseSensitive: false
-			//  }
-			//    }
-			// ]
 			routes: {
 				"/": {
 					upstreams: {
@@ -59,20 +43,13 @@ Reviews_V3: gsl.#Service & {
 	egress: {
 		"backends": {
 			gsl.#HTTPListener
-			custom_headers: [
-				{
-					key:   "x-forwarded-proto"
-					value: "https"
-				},
-			]
 			port: context.globals.custom.default_egress
 			routes: {
 				"/ratings/": {
-					// prefix_rewrite: "/ratings/"
+					prefix_rewrite: "/ratings/"
 					upstreams: {
-						"ratings-v1": {
+						"ratings": {
 							namespace: "bookinfo"
-							gsl.#MTLSUpstream
 						}
 					}
 				}
@@ -82,9 +59,11 @@ Reviews_V3: gsl.#Service & {
 
 	edge: {
 		edge_name: "edge"
-		routes: "/bookinfo/reviews-v3": upstreams: (name): {
-			namespace: "bookinfo"
-			gsl.#MTLSUpstream
+		routes: "/bookinfo/reviews-v3": {
+			prefix_rewrite: "/reviews/"
+			upstreams: (name): {
+				namespace: "bookinfo"
+			}
 		}
 	}
 }

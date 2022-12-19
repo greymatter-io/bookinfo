@@ -48,7 +48,7 @@ spec:
             cpu: "200m"
             memory: "512Mi"
           requests:
-            cpu: "50m"
+            cpu: "150m"
             memory: "128Mi"
         volumeMounts:
         - name: ssh-private-key
@@ -62,7 +62,6 @@ spec:
             configMapKeyRef:
               name: greymatter-sync-config
               key: GREYMATTER_GIT_REMOTE
-
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -71,4 +70,4 @@ metadata:
   namespace: bookinfo
 data:
   # property-like keys; each key maps to a simple value
-  GREYMATTER_GIT_REMOTE: "git@github.com:jack-bischoff/bookinfo"
+  GREYMATTER_GIT_REMOTE: "git@github.com:greymatter.io/bookinfo.git"

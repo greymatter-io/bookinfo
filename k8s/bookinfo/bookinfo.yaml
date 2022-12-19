@@ -29,6 +29,35 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: details2
+  labels:
+    app: details2
+    version: v1
+  annotations:
+    greymatter.io/inject-sidecar-to: "9080"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: details2
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: details2
+        version: v1
+    spec:
+      # serviceAccountName: bookinfo-details2
+      containers:
+        - name: details2
+          image: docker.io/istio/examples-bookinfo-details-v1:1.17.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 1000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: details
   labels:
     app: details

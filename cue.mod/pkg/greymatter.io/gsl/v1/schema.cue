@@ -1,3 +1,4 @@
+// Copyright 2022, greymatter.io Inc., All rights reserved.  
 package v1
 
 import (
@@ -47,17 +48,17 @@ import (
 #ListenerSchema: {
 	#ListenerTLSSchema
 	#ListenerSecretSchema
-	zone_key:               #DEFAULT_ZONE
-	ip:                     string
-	port:                   int32
-	protocol:               #NetworkProtocol
-	stream_idle_timeout?:   string
-	request_timeout?:       string
-	drain_timeout?:         string
-	delayed_close_timeout?: string
-	use_remote_address?:    bool
-	tracing_config?:        api.#TracingConfig
-	access_loggers?:        api.#AccessLoggers
+	zone_key:                #DEFAULT_ZONE
+	ip:                      string
+	port:                    int32
+	protocol:                #NetworkProtocol
+	stream_idle_timeout?:    string
+	request_timeout?:        string
+	drain_timeout?:          string
+	delayed_close_timeout?:  string
+	use_remote_address?:     bool
+	tracing_config?:         api.#TracingConfig
+	access_loggers?:         api.#AccessLoggers
 	http_protocol_options?:  api.#HTTPProtocolOptions
 	http2_protocol_options?: api.#HTTP2ProtocolOptions
 	domain_name:             *"*" | _
@@ -114,14 +115,14 @@ import (
 	_routePathNoSlash: strings.TrimSuffix(routePath, "/")
 	_routePathSlash:   _routePathNoSlash + "/"
 
-	zone_key:       #DEFAULT_ZONE
-	prefix_rewrite: *"/" | string
-	high_priority?: bool
-	timeout?:       string
-	idle_timeout?:  string
-	route_match:    api.#RouteMatch
-	response_data?: api.#ResponseData
-	retry_policy?:  api.#RetryPolicy
+	zone_key:        #DEFAULT_ZONE
+	prefix_rewrite?: string
+	high_priority?:  bool
+	timeout?:        string
+	idle_timeout?:   string
+	route_match:     api.#RouteMatch
+	response_data?:  api.#ResponseData
+	retry_policy?:   api.#RetryPolicy
 	filter_metadata?: [string]: api.#Metadata
 	filter_configs?: [string]: {...}
 	request_headers_to_add?: [...api.#Metadatum]

@@ -1,3 +1,4 @@
+// Copyright 2022, greymatter.io Inc., All rights reserved.  
 package v1
 
 #DEFAULT_ZONE: "default-zone"
@@ -31,7 +32,12 @@ package v1
 }
 
 #DefaultOPAEgress: {
-	routes: "/": upstreams: "opa": #DefaultOPAUpstream
+	#options: {
+		namespace:    string
+		service_name: *"opa" | string
+	}
+
+	routes: "/": upstreams: (#options.service_name): #DefaultOPAUpstream & {namespace: #options.namespace}
 }
 
 #DefaultContext: #GlobalContext & {
